@@ -43,12 +43,14 @@ void PackManager::savePacks() {
 }
 
 std::filesystem::path PackManager::getPackDir() {
-    return Mod::get()->getConfigDir() / "packs";
+    // getConfigDir() returns asp::fs::Path in Geode v6
+    std::string dirStr = (Mod::get()->getConfigDir() / "packs").string();
+    return std::filesystem::path(dirStr);
 }
 
 size_t PackManager::loadPacks() {
     auto packDir = PackManager::getPackDir();
-    (void)file::createDirectoryAll(packDir);
+    (void)file::createDirectoryAll(packDir.string());
 
     size_t loaded = 0;
 
@@ -58,7 +60,7 @@ size_t PackManager::loadPacks() {
     for (auto& dir : std::filesystem::directory_iterator(packDir)) {
         auto packRes = Pack::from(dir);
         if (!packRes) {
-            log::warn("Unable to load pack {}: {}", string::pathToString(dir.path()), packRes.unwrapErr());
+            log::warn("Unable to load pack {}: {}", dir.path().string(), packRes.unwrapErr());
         } else {
             found.push_back(packRes.unwrap());
             loaded++;
@@ -72,8 +74,9 @@ size_t PackManager::loadPacks() {
     // manually do this so we can skip packs that fail
     for (auto const& obj : Mod::get()->getSavedValue<std::vector<matjson::Value>>("applied")) {
         if (obj.isObject() && obj.contains("path") && obj["path"].isString()) {
-            if(auto pathRes = obj["path"].as<std::filesystem::path>()) {
-                auto res = Pack::from(pathRes.unwrap());
+            if(auto pathStr = obj["path"].as<std::string>()) {
+                std::filesystem::path path(pathStr.unwrap());
+                auto res = Pack::from(path);
                 if (res) {
                     savedApplied.push_back(res.unwrap());
                 }
