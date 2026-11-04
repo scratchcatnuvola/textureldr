@@ -210,7 +210,7 @@ void PackSelectPopup::onApply(CCObject*) {
 }
 
 void PackSelectPopup::onOpenFolder(CCObject*) {
-    utils::file::openFolder(PackManager::get()->getPackDir());
+    utils::file::openFolder(PackManager::get()->getPackDir().string());
 }
 
 void PackSelectPopup::onReloadPacks(CCObject*) {
