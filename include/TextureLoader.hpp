@@ -31,9 +31,14 @@ struct Pack {
     std::filesystem::path resourcesPath;
 };
 
-inline std::vector<Pack> getAvailablePacks() GEODE_EVENT_EXPORT(&getAvailablePacks, ());
-inline std::vector<Pack> getAppliedPacks() GEODE_EVENT_EXPORT(&getAppliedPacks, ());
-inline void openPopup() GEODE_EVENT_EXPORT(&openPopup, ());
+inline std::vector<Pack> getAvailablePacks()
+    GEODE_EVENT_EXPORT(std::vector<Pack>, getAvailablePacks, (), ());
+
+inline std::vector<Pack> getAppliedPacks()
+    GEODE_EVENT_EXPORT(std::vector<Pack>, getAppliedPacks, (), ());
+
+inline void openPopup()
+    GEODE_EVENT_EXPORT(void, openPopup, (), ());
 
 }
 
