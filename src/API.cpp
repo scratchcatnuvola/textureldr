@@ -14,7 +14,6 @@ api::Pack convertPack(std::shared_ptr<Pack> const& pack) {
     res.name = pack->getDisplayName();
     res.path = pack->getOriginPath();
     res.resourcesPath = pack->getResourcesPath();
-    // if the pack has a mod.json
     if (auto opt = pack->getInfo()) {
         auto info = opt.value();
         res.version = info.m_version;
@@ -23,13 +22,17 @@ api::Pack convertPack(std::shared_ptr<Pack> const& pack) {
     return res;
 }
 
-std::vector<api::Pack> api::getAvailablePacks() {
-    return utils::ranges::map<std::vector<api::Pack>>(PackManager::get()->getAvailablePacks(), convertPack);
-}
-std::vector<api::Pack> api::getAppliedPacks() {
-    return utils::ranges::map<std::vector<api::Pack>>(PackManager::get()->getAppliedPacks(), convertPack);
+geode::Result<std::vector<api::Pack>> api::getAvailablePacks() {
+    return Ok(utils::ranges::map<std::vector<api::Pack>>(
+        PackManager::get()->getAvailablePacks(), convertPack));
 }
 
-void api::openPopup() {
+geode::Result<std::vector<api::Pack>> api::getAppliedPacks() {
+    return Ok(utils::ranges::map<std::vector<api::Pack>>(
+        PackManager::get()->getAppliedPacks(), convertPack));
+}
+
+geode::Result<> api::openPopup() {
     PackSelectPopup::create()->show();
+    return Ok();
 }
