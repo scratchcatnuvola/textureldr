@@ -3,6 +3,7 @@
 #include <Geode/loader/Dispatch.hpp>
 #include <Geode/loader/Loader.hpp>
 #include <Geode/utils/VersionInfo.hpp>
+#include <Geode/Result.hpp>
 
 #include <filesystem>
 #include <vector>
@@ -31,10 +32,8 @@ struct Pack {
     std::filesystem::path resourcesPath;
 };
 
-GEODE_EVENT_EXPORT(std::vector<Pack>, getAvailablePacks, (), ());
-GEODE_EVENT_EXPORT(std::vector<Pack>, getAppliedPacks, (), ());
-GEODE_EVENT_EXPORT(void, openPopup, (), ());
+GEODE_EVENT_EXPORT(geode::Result<std::vector<Pack>>, getAvailablePacks, (), ());
+GEODE_EVENT_EXPORT(geode::Result<std::vector<Pack>>, getAppliedPacks, (), ());
+GEODE_EVENT_EXPORT(geode::Result<>, openPopup, (), ());
 
 }
-
-#undef MY_MOD_ID
