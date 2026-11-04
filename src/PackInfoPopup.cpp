@@ -6,7 +6,7 @@
 class WackyBypassFont : public CCLabelBMFont {
 protected:
     void setFntFile(std::filesystem::path fnt) {
-        auto fntString = string::pathToString(fnt);
+        auto fntString = fnt.string();
         auto conf = FNTConfigLoadFile(fntString.c_str());
         m_sFntFile = fntString;
         if (!conf) {
@@ -17,7 +17,7 @@ protected:
         if (m_pConfiguration)
             m_pConfiguration->release();
         m_pConfiguration = conf;
-        conf->m_sAtlasName = string::pathToString(fnt.replace_extension("png"));
+        conf->m_sAtlasName = fnt.replace_extension("png").string();
 
         this->setTexture(
             CCTextureCache::sharedTextureCache()->addImage(conf->getAtlasName(), false)
@@ -53,18 +53,22 @@ std::filesystem::path PackInfoPopup::getPathInPack(const char* filename) const {
 
     auto fname = std::filesystem::path(filename);
     fname.replace_filename(
-        string::pathToString(fname.stem()) + suffix + string::pathToString(fname.extension())
+        fname.stem().string() + suffix + fname.extension().string()
     );
 
     if (std::filesystem::exists(m_pack->getResourcesPath() / fname)) {
         return m_pack->getResourcesPath() / fname;
     } else {
-        return dirs::getGameDir() / "Resources" / fname;
+        // dirs::getGameDir() returns asp::fs::Path in Geode v6
+        std::string gameDirStr = dirs::getGameDir().string();
+        std::filesystem::path gameDir(gameDirStr);
+        return gameDir / "Resources" / fname;
     }
 }
 
 bool PackInfoPopup::init(const std::shared_ptr<Pack>& pack) {
-    if (!Popup::init(320.f, 200.f, string::pathToString(this->getPathInPack("GJ_square01.png")).c_str())) return false;
+    auto popupBgStr = this->getPathInPack("GJ_square01.png").string();
+    if (!Popup::init(320.f, 200.f, popupBgStr.c_str())) return false;
 
     m_pack = pack;
 
@@ -100,7 +104,7 @@ bool PackInfoPopup::init(const std::shared_ptr<Pack>& pack) {
         defaultBtnLabel->getScaledContentSize() + CCSize { 20.f, 15.f };
 
     auto defaultBtnSpr = NineSlice::create(
-        string::pathToString(this->getPathInPack("GJ_button_01.png")),
+        this->getPathInPack("GJ_button_01.png").string(),
         { 0, 0, 40, 40 }
     );
     defaultBtnSpr->setContentSize(defaultBtnSize);
@@ -127,7 +131,7 @@ bool PackInfoPopup::init(const std::shared_ptr<Pack>& pack) {
         altBtnLabel->getScaledContentSize() + CCSize { 20.f, 15.f };
 
     auto altBtnSpr = NineSlice::create(
-        string::pathToString(this->getPathInPack("GJ_button_02.png")),
+        this->getPathInPack("GJ_button_02.png").string(),
         { 0, 0, 40, 40 }
     );
     altBtnSpr->setContentSize(altBtnSize);
