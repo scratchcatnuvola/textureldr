@@ -44,7 +44,7 @@ bool PackNode::init(
         }
         limitNodeSize(logo, logoSize, 1.f, .1f);
     });
-    logo->loadFromFile((pack->getResourcesPath() / "pack.png"));
+    logo->loadFromFile((pack->getResourcesPath() / "pack.png").string());
     logo->setPosition({ SPACE_FOR_LOGO / 2 + PADDING, HEIGHT / 2 });
     this->addChild(logo);
     
