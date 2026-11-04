@@ -31,9 +31,9 @@ struct Pack {
     std::filesystem::path resourcesPath;
 };
 
-inline std::vector<Pack> getAvailablePacks() GEODE_EVENT_EXPORT_NORES(&getAvailablePacks, ());
-inline std::vector<Pack> getAppliedPacks() GEODE_EVENT_EXPORT_NORES(&getAppliedPacks, ());
-inline void openPopup() GEODE_EVENT_EXPORT_NORES(&openPopup, ());
+inline std::vector<Pack> getAvailablePacks() GEODE_EVENT_EXPORT(&getAvailablePacks, ());
+inline std::vector<Pack> getAppliedPacks() GEODE_EVENT_EXPORT(&getAppliedPacks, ());
+inline void openPopup() GEODE_EVENT_EXPORT(&openPopup, ());
 
 }
 
