@@ -50,13 +50,13 @@ std::filesystem::path Pack::getResourcesPath() const {
 std::string Pack::getID() const {
     return m_info.has_value() ? 
         m_info.value().m_id :
-        string::pathToString(m_path.filename());
+        m_path.filename().string();
 }
 
 std::string Pack::getDisplayName() const {
     return m_info.has_value() ?
         m_info.value().m_name :
-        string::pathToString(m_path.filename());
+        m_path.filename().string();
 }
 
 std::optional<PackInfo> Pack::getInfo() const {
@@ -66,7 +66,7 @@ std::optional<PackInfo> Pack::getInfo() const {
 Result<> Pack::apply() {
     CCFileUtils::get()->addTexturePack(CCTexturePack {
         .m_id = this->getID(),
-        .m_paths = { string::pathToString(this->getResourcesPath()) }
+        .m_paths = { this->getResourcesPath().string() }
     });
     return Ok();
 }
@@ -78,7 +78,8 @@ Result<> Pack::unapply() const {
 
 Result<> Pack::parsePackJson() {
     try {
-        GEODE_UNWRAP_INTO(auto json, file::readJson(m_resourcesPath / "pack.json"));
+        auto packJsonPath = (m_resourcesPath / "pack.json").string();
+        GEODE_UNWRAP_INTO(auto json, file::readJson(packJsonPath));
         GEODE_UNWRAP_INTO(m_info, PackInfo::from(json));
         return Ok();
     } catch(std::exception& e) {
@@ -105,17 +106,21 @@ Result<> Pack::extract() {
     // this method is only for zips and stuff
     if (std::filesystem::is_directory(m_path)) return Ok();
 
-    auto const fileExt = string::pathToString(m_path.extension());
+    auto const fileExt = m_path.extension().string();
     // TODO: we dont support rar, lol
     if (fileExt != ".zip" && fileExt != ".apk") {
         return Err("Expected zip or apk");
     }
 
-    auto extractPath = Mod::get()->getSaveDir() / "unzipped" / this->getID();
-    (void) utils::file::createDirectoryAll(extractPath);
+    // Mod::get()->getSaveDir() returns asp::fs::Path in Geode v6
+    std::string extractPathStr =
+        (Mod::get()->getSaveDir() / "unzipped" / this->getID()).string();
+    std::filesystem::path extractPath(extractPathStr);
 
-    auto datePath = extractPath / "modified-at";
-    std::string currentHash = file::readString(datePath).unwrapOr("");
+    (void) utils::file::createDirectoryAll(extractPathStr);
+
+    std::string datePathStr = (extractPath / "modified-at").string();
+    std::string currentHash = file::readString(datePathStr).unwrapOr("");
 
     std::error_code ec;
     auto modifiedDate = std::filesystem::last_write_time(m_path, ec);
@@ -135,14 +140,15 @@ Result<> Pack::extract() {
         return Err("Unable to delete temp dir: {}", ec.message());
     }
 
-    (void) utils::file::createDirectoryAll(extractPath);
-    auto res = file::writeString(datePath, modifiedHash);
+    (void) utils::file::createDirectoryAll(extractPathStr);
+    auto res = file::writeString(datePathStr, modifiedHash);
     if (!res) {
         log::warn("Failed to write modified date of extracted pack: {}", res.unwrapErr());
     }
 
-    GEODE_UNWRAP_INTO(auto unzip, file::Unzip::create(m_path));
-    GEODE_UNWRAP(unzip.extractAllTo(extractPath));
+    auto mPathStr = m_path.string();
+    GEODE_UNWRAP_INTO(auto unzip, file::Unzip::create(mPathStr));
+    GEODE_UNWRAP(unzip.extractAllTo(extractPathStr));
 
     m_unzippedPath = extractPath;
     m_resourcesPath = extractPath;
@@ -153,7 +159,7 @@ Result<> Pack::extract() {
 std::optional<std::filesystem::path> Pack::findResourcesPath(std::filesystem::path targetPath) {
     // Packs are often distributed in weird ways, this code tries to find where the resources actually are..
 
-    if (string::pathToString(m_path.extension()) == ".apk") {
+    if (m_path.extension().string() == ".apk") {
         // resources can only be in one place! very easy
         return m_unzippedPath / "assets";
     }
@@ -183,8 +189,8 @@ std::optional<std::filesystem::path> Pack::findResourcesPath(std::filesystem::pa
         if (!file.is_regular_file()) continue;
 
         auto const path = file.path();
-        auto const name = string::pathToString(path.stem());
-        auto const ext = string::pathToString(path.extension());
+        auto const name = path.stem().string();
+        auto const ext = path.extension().string();
 
         if (ext == ".plist") {
             return targetPath;
@@ -230,12 +236,13 @@ Result<std::shared_ptr<Pack>> Pack::from(std::filesystem::path const& dir) {
 
 matjson::Value matjson::Serialize<std::shared_ptr<Pack>>::toJson(std::shared_ptr<Pack> const& pack) {
     return matjson::makeObject({
-        { "path", pack->getOriginPath() }
+        { "path", pack->getOriginPath().string() }
     });
 }
 
 Result<std::shared_ptr<Pack>> matjson::Serialize<std::shared_ptr<Pack>>::fromJson(matjson::Value const& value) {
-    GEODE_UNWRAP_INTO(auto path, value["path"].as<std::filesystem::path>());
+    GEODE_UNWRAP_INTO(auto pathStr, value["path"].as<std::string>());
+    std::filesystem::path path(pathStr);
     GEODE_UNWRAP_INTO(auto pack, Pack::from(path));
     return Ok(pack);
 }
